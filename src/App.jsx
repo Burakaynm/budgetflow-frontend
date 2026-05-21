@@ -6,6 +6,8 @@ const API_URL = "http://127.0.0.1:8000";
 function App() {
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState("");
+  const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
 
   const [expenseForm, setExpenseForm] = useState({
     title: "",
@@ -39,8 +41,50 @@ function App() {
       });
   };
 
-  useEffect(() => {
+  const fetchExpenses = () => {
+    fetch(`${API_URL}/expenses`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Expenses request failed");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setExpenses(data);
+      })
+      .catch((error) => {
+        console.error("Expenses could not be fetched:", error);
+        setError("Expenses could not be loaded.");
+      });
+  };
+
+  const fetchIncomes = () => {
+    fetch(`${API_URL}/incomes`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Incomes request failed");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setIncomes(data);
+      })
+      .catch((error) => {
+        console.error("Incomes could not be fetched:", error);
+        setError("Incomes could not be loaded.");
+      });
+  };
+
+  const refreshDashboard = () => {
     fetchBudgetSummary();
+    fetchExpenses();
+    fetchIncomes();
+  };
+
+  useEffect(() => {
+    refreshDashboard();
   }, []);
 
   const handleExpenseChange = (event) => {
@@ -89,7 +133,7 @@ function App() {
         date: "",
       });
 
-      fetchBudgetSummary();
+      refreshDashboard();
     } catch (error) {
       console.error("Expense could not be created:", error);
       setError("Expense could not be created.");
@@ -124,7 +168,7 @@ function App() {
         date: "",
       });
 
-      fetchBudgetSummary();
+      refreshDashboard();
     } catch (error) {
       console.error("Income could not be created:", error);
       setError("Income could not be created.");
@@ -275,6 +319,54 @@ function App() {
 
           <button type="submit">Add Income</button>
         </form>
+      </section>
+
+      <section className="lists-section">
+        <div className="list-card">
+          <h2>Recent Expenses</h2>
+
+          {expenses.length === 0 ? (
+            <p className="empty-text">No expenses found.</p>
+          ) : (
+            <div className="items-list">
+              {expenses.map((expense) => (
+                <div className="list-item" key={expense.id}>
+                  <div>
+                    <strong>{expense.title}</strong>
+                    <span>
+                      {expense.category} • {expense.date}
+                    </span>
+                  </div>
+
+                  <strong>{expense.amount} ₺</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="list-card">
+          <h2>Recent Incomes</h2>
+
+          {incomes.length === 0 ? (
+            <p className="empty-text">No incomes found.</p>
+          ) : (
+            <div className="items-list">
+              {incomes.map((income) => (
+                <div className="list-item" key={income.id}>
+                  <div>
+                    <strong>{income.title}</strong>
+                    <span>
+                      {income.source} • {income.date}
+                    </span>
+                  </div>
+
+                  <strong>{income.amount} ₺</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
